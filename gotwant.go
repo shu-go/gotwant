@@ -35,30 +35,24 @@ func C(got, want interface{}, optFmt ...string) Case {
 
 // Test if for a single try.
 func Test(t *testing.T, got, want interface{}, optFmt ...string) {
-	c := C(got, want, optFmt...)
-
-	if !reflect.DeepEqual(c.Got, c.Want) {
-		valfmt := c.Fmt
-		if valfmt == "" {
-			valfmt = FmtDefault
-		}
-		_, file, line, _ := runtime.Caller(1)
-		errfmt := fmt.Sprintf("%s:%d\ngot:  %s\nwant: %s", filepath.Base(file), line, valfmt, valfmt)
-		t.Errorf(errfmt, c.Got, c.Want)
-	}
+	test(t, C(got, want, optFmt...))
 }
 
 // TestAll is for a series of tries(Cases).
 func TestAll(t *testing.T, cases ...Case) {
 	for _, c := range cases {
-		if !reflect.DeepEqual(c.Got, c.Want) {
-			valfmt := c.Fmt
-			if valfmt == "" {
-				valfmt = FmtDefault
-			}
-			_, file, line, _ := runtime.Caller(1)
-			errfmt := fmt.Sprintf("%s:%d\ngot:  %s\nwant: %s", filepath.Base(file), line, valfmt, valfmt)
-			t.Errorf(errfmt, c.Got, c.Want)
+		test(t, c)
+	}
+}
+
+func test(t *testing.T, c Case) {
+	if !reflect.DeepEqual(c.Got, c.Want) {
+		valfmt := c.Fmt
+		if valfmt == "" {
+			valfmt = FmtDefault
 		}
+		_, file, line, _ := runtime.Caller(2)
+		errfmt := fmt.Sprintf("%s:%d\ngot:  %s\nwant: %s", filepath.Base(file), line, valfmt, valfmt)
+		t.Errorf(errfmt, c.Got, c.Want)
 	}
 }
