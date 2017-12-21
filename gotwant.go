@@ -18,24 +18,33 @@ type Case struct {
 	Fmt  string      // used in t.Errorf displaying got and want.  default: FmtDefault
 }
 
+type Option func(*Case) error
+
+func Format(fmt string) Option {
+	return func(c *Case) error {
+		c.Fmt = fmt
+		return nil
+	}
+}
+
 // C constructs a Case.
 // You can construct a Case by hand.
-func C(got, want interface{}, optFmt ...string) Case {
+func C(got, want interface{}, opts ...Option) Case {
 	c := Case{
 		Got:  got,
 		Want: want,
 	}
-	if len(optFmt) > 0 {
-		c.Fmt = optFmt[0]
+	for _, o := range opts {
+		o(&c)
 	}
 	return c
 }
 
 // Test if for a single try.
-func Test(t *testing.T, got, want interface{}, optFmt ...string) {
+func Test(t *testing.T, got, want interface{}, opts ...Option) {
 	t.Helper()
 
-	test(t, C(got, want, optFmt...))
+	test(t, C(got, want, opts...))
 }
 
 // TestAll is for a series of tries(Cases).
