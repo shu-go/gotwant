@@ -15,14 +15,26 @@ var (
 type Case struct {
 	Got  interface{} // what you got.
 	Want interface{} // what you expected.
-	Fmt  string      // used in t.Errorf displaying got and want.  default: FmtDefault
+
+	Fmt  string // used in t.Errorf displaying got and want.  default: FmtDefault
+	Desc string // a line description
 }
 
+// Option sets optional values.
 type Option func(*Case) error
 
+// Format sets(changes) print format. default: FmtDefault
 func Format(fmt string) Option {
 	return func(c *Case) error {
 		c.Fmt = fmt
+		return nil
+	}
+}
+
+// Desc sets a line description.
+func Desc(desc string) Option {
+	return func(c *Case) error {
+		c.Desc = desc
 		return nil
 	}
 }
@@ -64,7 +76,7 @@ func test(t *testing.T, c Case) {
 		if valfmt == "" {
 			valfmt = FmtDefault
 		}
-		errfmt := fmt.Sprintf("\ngot:  %s\nwant: %s", valfmt, valfmt)
+		errfmt := fmt.Sprintf("%s\ngot:  %s\nwant: %s", c.Desc, valfmt, valfmt)
 		t.Errorf(errfmt, c.Got, c.Want)
 	}
 }
