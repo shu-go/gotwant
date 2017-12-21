@@ -3,9 +3,7 @@ package gotwant
 
 import (
 	"fmt"
-	"path/filepath"
 	"reflect"
-	"runtime"
 	"testing"
 )
 
@@ -35,24 +33,29 @@ func C(got, want interface{}, optFmt ...string) Case {
 
 // Test if for a single try.
 func Test(t *testing.T, got, want interface{}, optFmt ...string) {
+	t.Helper()
+
 	test(t, C(got, want, optFmt...))
 }
 
 // TestAll is for a series of tries(Cases).
 func TestAll(t *testing.T, cases ...Case) {
+	t.Helper()
+
 	for _, c := range cases {
 		test(t, c)
 	}
 }
 
 func test(t *testing.T, c Case) {
+	t.Helper()
+
 	if !reflect.DeepEqual(c.Got, c.Want) {
 		valfmt := c.Fmt
 		if valfmt == "" {
 			valfmt = FmtDefault
 		}
-		_, file, line, _ := runtime.Caller(2)
-		errfmt := fmt.Sprintf("%s:%d\ngot:  %s\nwant: %s", filepath.Base(file), line, valfmt, valfmt)
+		errfmt := fmt.Sprintf("\ngot:  %s\nwant: %s", valfmt, valfmt)
 		t.Errorf(errfmt, c.Got, c.Want)
 	}
 }
