@@ -4,6 +4,7 @@ package gotwant
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -79,4 +80,56 @@ func test(t *testing.T, c Case) {
 		errfmt := fmt.Sprintf("%s\ngot:  %s\nwant: %s", c.Desc, valfmt, valfmt)
 		t.Errorf(errfmt, c.Got, c.Want)
 	}
+}
+
+// Error tests given error (got) is (1) exactly the error you wanted or (2) its message matches your pattern.
+// If want is a string, this func tests with strings.Contains(got, want)
+// else, this func tests with reflect.DeepEqual(got, want)
+func Error(t *testing.T, got, want interface{}, opts ...Option) {
+	t.Helper()
+
+	errorLike(t, C(got, want, opts...))
+}
+
+func errorLike(t *testing.T, c Case) {
+	t.Helper()
+
+	var gotErr error
+	var wantErrMsg string
+	var ok bool
+
+	if c.Got != nil {
+		gotErr, ok = c.Got.(error)
+		if !ok {
+			t.Fatal("got non-error type")
+		}
+	}
+
+	if c.Want != nil {
+		if _, ok = c.Want.(error); !ok {
+			wantErrMsg, ok = c.Want.(string)
+			if !ok {
+				t.Fatal("wanted non-error type")
+			}
+		}
+	}
+
+	if wantErrMsg != "" {
+		// compare message
+		if strings.Contains(strings.ToLower(gotErr.Error()), strings.ToLower(wantErrMsg)) {
+			return
+		}
+
+	} else {
+		if reflect.DeepEqual(c.Got, c.Want) {
+			return
+		}
+	}
+
+	valfmt := c.Fmt
+	if valfmt == "" {
+		valfmt = FmtDefault
+	}
+	errfmt := fmt.Sprintf("%s\ngot error:  %s\nwant error: %s", c.Desc, valfmt, valfmt)
+	t.Errorf(errfmt, c.Got, c.Want)
 }
