@@ -41,6 +41,12 @@ func (c *cmpCase) Test(t *testing.T) {
 		valfmt := c.Fmt
 		if valfmt == "" {
 			valfmt = FmtDefault
+			for _, f := range []string{FmtDefault, "%#v", "%T"} {
+				fmted1, fmted2 := fmt.Sprintf(f, c.Got), fmt.Sprintf(f, c.Want)
+				if fmted1 != fmted2 {
+					valfmt = f
+				}
+			}
 		}
 		errfmt := fmt.Sprintf("%s\ngot:  %s\nwant: %s", c.Desc, valfmt, valfmt)
 		t.Errorf(errfmt, c.Got, c.Want)
