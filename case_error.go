@@ -55,6 +55,16 @@ func (c *errCase) Test(t *testing.T) {
 	}
 
 	if wantErrMsg != "" {
+		if c.Got == nil {
+			valfmt := c.Fmt
+			if valfmt == "" {
+				valfmt = FmtDefault
+			}
+			errfmt := fmt.Sprintf("%s\ngot error:  %s\nwant error: %s", c.Desc, valfmt, valfmt)
+			t.Errorf(errfmt, c.Got, c.Want)
+			return
+		}
+
 		// compare message
 		if strings.Contains(strings.ToLower(c.Got.Error()), strings.ToLower(wantErrMsg)) {
 			return
