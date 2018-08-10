@@ -43,31 +43,31 @@ func (c *errCase) Test(t *testing.T) {
 		valfmt = FmtDefault
 	}
 
-	var wantErrMsg string
-	var ok bool
-
-	if c.Want != nil {
-		if _, ok = c.Want.(error); !ok {
-			wantErrMsg, ok = c.Want.(string)
-			if !ok {
-				t.Fatal("wanted non-error type")
-			}
-		}
-	}
-
 	if c.Got == nil && c.Want == nil {
 		return
 	}
 
-	if wantErrMsg != "" {
-		if c.Got == nil {
-			errfmt := fmt.Sprintf("%s\ngot error:  %s\nwant error: %s", c.Desc, valfmt, valfmt)
-			t.Errorf(errfmt, c.Got, c.Want)
-			return
-		}
+	if c.Got == nil {
+		errfmt := fmt.Sprintf("%s\ngot NO error.\nwant error: %s", c.Desc, valfmt)
+		t.Errorf(errfmt, c.Want)
+	}
 
+	var wantErrMsg *string
+	if c.Want != nil {
+		if err, ok := c.Want.(error); ok {
+			str := err.Error()
+			wantErrMsg = &str
+		} else if str, ok := c.Want.(string); ok {
+			wantErrMsg = &str
+		} else if s, ok := c.Want.(fmt.Stringer); ok {
+			str := s.String()
+			wantErrMsg = &str
+		}
+	}
+
+	if wantErrMsg != nil {
 		// compare message
-		if strings.Contains(strings.ToLower(c.Got.Error()), strings.ToLower(wantErrMsg)) {
+		if strings.Contains(strings.ToLower(c.Got.Error()), strings.ToLower(*wantErrMsg)) {
 			return
 		}
 

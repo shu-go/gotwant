@@ -63,30 +63,35 @@ func (c *panicCase) Test(t *testing.T) {
 		t.Errorf(errfmt, c.Want)
 	}
 
-	var wantErrMsg string
-
-	if gotErr == nil && c.Want == nil {
-		return
+	var wantErrMsg *string
+	if c.Want != nil {
+		if err, ok := c.Want.(error); ok {
+			str := err.Error()
+			wantErrMsg = &str
+		} else if str, ok := c.Want.(string); ok {
+			wantErrMsg = &str
+		} else if s, ok := c.Want.(fmt.Stringer); ok {
+			str := s.String()
+			wantErrMsg = &str
+		}
 	}
 
-	if wantErrMsg != "" {
-		if gotErr == nil {
-			errfmt := fmt.Sprintf("%s\ngot error:  %s\nwant error: %s", c.Desc, valfmt, valfmt)
-			t.Errorf(errfmt, gotErr, c.Want)
-			return
-		}
-
+	if wantErrMsg != nil {
 		// compare message
-		if s, ok := gotErr.(fmt.Stringer); ok {
-			if strings.Contains(strings.ToLower(s.String()), strings.ToLower(wantErrMsg)) {
+		if s, ok := gotErr.(string); ok {
+			if strings.Contains(strings.ToLower(s), strings.ToLower(*wantErrMsg)) {
+				return
+			}
+		} else if s, ok := gotErr.(fmt.Stringer); ok {
+			if strings.Contains(strings.ToLower(s.String()), strings.ToLower(*wantErrMsg)) {
 				return
 			}
 		}
 
-	} else {
-		if reflect.DeepEqual(gotErr, c.Want) {
-			return
-		}
+	}
+
+	if reflect.DeepEqual(gotErr, c.Want) {
+		return
 	}
 
 	errfmt := fmt.Sprintf("%s\ngot error:  %s\nwant error: %s", c.Desc, valfmt, valfmt)

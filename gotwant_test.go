@@ -31,6 +31,7 @@ func TestHowToWrite(t *testing.T) {
 		}
 
 		gotwant.TestError(t, errfunc1(), nil)
+		gotwant.TestError(t, errfunc2(), "")
 		gotwant.TestError(t, errfunc2(), myErr)
 		gotwant.TestError(t, errfunc2(), "is an")
 	})
@@ -38,11 +39,18 @@ func TestHowToWrite(t *testing.T) {
 	t.Run("Panic", func(t *testing.T) {
 		gotwant.TestPanic(t, func() {
 			panic("hoge")
-		}, "hoge")
+		}, "og")
+
+		gotwant.TestPanic(t, func() {
+			panic("hoge")
+		}, "")
 
 		gotwant.TestPanic(t, func() {
 		}, nil)
 
+		gotwant.TestPanic(t, func() {
+			panic(123)
+		}, 123)
 	})
 
 	t.Run("Options", func(t *testing.T) {
