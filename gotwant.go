@@ -55,6 +55,8 @@ func TestError(t *testing.T, got error, want interface{}, opts ...Option) {
 	Error(got, want, opts...).Test(t)
 }
 
+// TestPanic tests function got panic(want) or not.
+// Pass nil to `want` if `got` is not expected panicked.
 func TestPanic(t *testing.T, got func(), want interface{}, opts ...Option) {
 	t.Helper()
 
