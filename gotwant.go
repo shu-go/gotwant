@@ -30,7 +30,7 @@ func Format(fmt string) Option {
 func Desc(desc string) Option {
 	return func(c TestCase) {
 		c.SetDesc(desc)
-}
+	}
 }
 
 // Test if for a single try.
@@ -53,6 +53,12 @@ func TestError(t *testing.T, got error, want interface{}, opts ...Option) {
 	t.Helper()
 
 	Error(got, want, opts...).Test(t)
+}
+
+func TestPanic(t *testing.T, got func(), want interface{}, opts ...Option) {
+	t.Helper()
+
+	Panic(got, want, opts...).Test(t)
 }
 
 // TestAll is for a series of tries(Cases).

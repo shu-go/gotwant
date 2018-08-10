@@ -35,6 +35,16 @@ func TestHowToWrite(t *testing.T) {
 		gotwant.TestError(t, errfunc2(), "is an")
 	})
 
+	t.Run("Panic", func(t *testing.T) {
+		gotwant.TestPanic(t, func() {
+			panic("hoge")
+		}, "hoge")
+
+		gotwant.TestPanic(t, func() {
+		}, nil)
+
+	})
+
 	t.Run("Options", func(t *testing.T) {
 		gotwant.Test(t, 1, 1, gotwant.Desc("one"))
 		gotwant.Test(t, "1", "1", gotwant.Desc("one as string"), gotwant.Format("%q"))
