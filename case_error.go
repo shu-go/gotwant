@@ -50,6 +50,7 @@ func (c *errCase) Test(t *testing.T) {
 	if c.Got == nil {
 		errfmt := fmt.Sprintf("%s\ngot NO error.\nwant error: %s", c.Desc, valfmt)
 		t.Errorf(errfmt, c.Want)
+		return
 	}
 
 	var wantErrMsg *string

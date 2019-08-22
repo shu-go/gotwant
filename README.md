@@ -1,1 +1,1 @@
-https://godoc.org/bitbucket.org/shu/gotwant
+https://godoc.org/github.com/shu-go/gotwant
