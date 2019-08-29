@@ -15,7 +15,7 @@ type errCase struct {
 	Desc string // a line description
 }
 
-// Case constructs a value-comaration test case.
+// Error constructs a error-comaration(nil, string) test case.
 func Error(got error, want interface{}, opts ...Option) *errCase {
 	c := &errCase{
 		Got:  got,

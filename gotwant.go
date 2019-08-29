@@ -6,9 +6,11 @@ import (
 )
 
 var (
+	// FmtDefault is a default value of displaying contents of got/want.
 	FmtDefault string = "%v"
 )
 
+// TestCase is made by calling Case, Error, ...
 type TestCase interface {
 	Test(t *testing.T)
 
@@ -40,6 +42,7 @@ func Test(t *testing.T, got, want interface{}, opts ...Option) {
 	Case(got, want, opts...).Test(t)
 }
 
+// TestExpr tests got == expr (boolean comparison)
 func TestExpr(t *testing.T, got interface{}, expr bool, opts ...Option) {
 	t.Helper()
 

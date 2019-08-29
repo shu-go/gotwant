@@ -15,7 +15,7 @@ type panicCase struct {
 	Desc string // a line description
 }
 
-// Case constructs a value-comaration test case.
+// Panic constructs a panic-occur test case.
 func Panic(got func(), want interface{}, opts ...Option) *panicCase {
 	c := &panicCase{
 		Got:  got,
