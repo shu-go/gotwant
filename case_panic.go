@@ -43,7 +43,7 @@ func (c *panicCase) Test(t *testing.T) {
 		valfmt = FmtDefault
 	}
 
-	var gotErr interface{} = nil
+	var gotErr interface{}
 	func() {
 		defer func() {
 			if err := recover(); err != nil {

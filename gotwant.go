@@ -7,7 +7,7 @@ import (
 
 var (
 	// FmtDefault is a default value of displaying contents of got/want.
-	FmtDefault string = "%v"
+	FmtDefault = "%v"
 )
 
 // TestCase is made by calling Case, Error, ...
