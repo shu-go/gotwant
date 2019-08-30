@@ -8,6 +8,7 @@ var (
 	FmtDefault = "%v"
 )
 
+// T has a few part of testing.T, to test gotwant itself.
 type T interface {
 	Helper()
 	Errorf(format string, args ...interface{})
