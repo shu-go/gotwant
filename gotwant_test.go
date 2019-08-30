@@ -26,165 +26,163 @@ func (t *testerT) Errorf(format string, args ...interface{}) {
 	fmt.Fprintf(&t.buf, format, args...)
 }
 
-func TestGotWant(t *testing.T) {
-	t.Run("Case", func(t *testing.T) {
-		tt := &testerT{buf: bytes.Buffer{}}
+func TestCase(t *testing.T) {
+	tt := &testerT{buf: bytes.Buffer{}}
 
-		c := gotwant.Case("got", "want")
-		c.Test(tt)
-		r := tt.buf.String()
-		if !regexp.MustCompile(`\s*got:  got\s*want: want`).MatchString(r) {
-			t.Error(r)
-		}
+	c := gotwant.Case("got", "want")
+	c.Test(tt)
+	r := tt.buf.String()
+	if !regexp.MustCompile(`\s*got:  got\s*want: want`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Case("want", "want")
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Case("want", "want")
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Case("want", errors.New("want"))
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*got:  "want"\s*want: &errors.errorString{s:"want"}`).MatchString(r) {
-			t.Error(r)
-		}
-	})
+	tt.Reset()
+	c = gotwant.Case("want", errors.New("want"))
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*got:  "want"\s*want: &errors.errorString{s:"want"}`).MatchString(r) {
+		t.Error(r)
+	}
+}
 
-	t.Run("Expr", func(t *testing.T) {
-		tt := &testerT{buf: bytes.Buffer{}}
+func TestExprCase(t *testing.T) {
+	tt := &testerT{buf: bytes.Buffer{}}
 
-		c := gotwant.ExprCase("abc", "abc" == "adc")
-		c.Test(tt)
-		r := tt.buf.String()
-		if !regexp.MustCompile(`\s*got:  abc`).MatchString(r) {
-			t.Error(r)
-		}
+	c := gotwant.ExprCase("abc", "abc" == "adc")
+	c.Test(tt)
+	r := tt.buf.String()
+	if !regexp.MustCompile(`\s*got:  abc`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.ExprCase("abc", "abc" == "abc")
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
-	})
+	tt.Reset()
+	c = gotwant.ExprCase("abc", "abc" == "abc")
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
+}
 
-	t.Run("Error", func(t *testing.T) {
-		tt := &testerT{buf: bytes.Buffer{}}
+func TestError(t *testing.T) {
+	tt := &testerT{buf: bytes.Buffer{}}
 
-		c := gotwant.Error(errors.New("my error"), "unmatch message")
-		c.Test(tt)
-		r := tt.buf.String()
-		if !regexp.MustCompile(`\s*got error:  my error\s*want error: unmatch message`).MatchString(r) {
-			t.Error(r)
-		}
+	c := gotwant.Error(errors.New("my error"), "unmatch message")
+	c.Test(tt)
+	r := tt.buf.String()
+	if !regexp.MustCompile(`\s*got error:  my error\s*want error: unmatch message`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Error(errors.New("my error"), "my")
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Error(errors.New("my error"), "my")
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Error(errors.New("my error"), nil)
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*got error:  my error`).MatchString(r) {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Error(errors.New("my error"), nil)
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*got error:  my error`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Error(nil, nil)
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Error(nil, nil)
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Error(nil, "my error")
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*want error: my error`).MatchString(r) {
-			t.Error(r)
-		}
-	})
+	tt.Reset()
+	c = gotwant.Error(nil, "my error")
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*want error: my error`).MatchString(r) {
+		t.Error(r)
+	}
+}
 
-	t.Run("Panic", func(t *testing.T) {
-		tt := &testerT{buf: bytes.Buffer{}}
+func TestPanic(t *testing.T) {
+	tt := &testerT{buf: bytes.Buffer{}}
 
-		c := gotwant.Panic(func() { panic("awawawawa...") }, "unmatch message")
-		c.Test(tt)
-		r := tt.buf.String()
-		if !regexp.MustCompile(`\s*got error:  awawawawa...\s*want error: unmatch message`).MatchString(r) {
-			t.Error(r)
-		}
+	c := gotwant.Panic(func() { panic("awawawawa...") }, "unmatch message")
+	c.Test(tt)
+	r := tt.buf.String()
+	if !regexp.MustCompile(`\s*got error:  awawawawa...\s*want error: unmatch message`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Panic(func() { panic("awawawawa...") }, "awawawawa")
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Panic(func() { panic("awawawawa...") }, "awawawawa")
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Panic(func() { panic("awawawawa...") }, nil)
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*got error:  awawawawa...`).MatchString(r) {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Panic(func() { panic("awawawawa...") }, nil)
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*got error:  awawawawa...`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Panic(func() { /*panic("awawawawa...")*/ }, nil)
-		c.Test(tt)
-		r = tt.buf.String()
-		if r != "" {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Panic(func() { /*panic("awawawawa...")*/ }, nil)
+	c.Test(tt)
+	r = tt.buf.String()
+	if r != "" {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Panic(func() { /*panic("awawawawa...")*/ }, "awawawawa...")
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*want error: awawawawa...`).MatchString(r) {
-			t.Error(r)
-		}
-	})
+	tt.Reset()
+	c = gotwant.Panic(func() { /*panic("awawawawa...")*/ }, "awawawawa...")
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*want error: awawawawa...`).MatchString(r) {
+		t.Error(r)
+	}
+}
 
-	t.Run("Option", func(t *testing.T) {
-		tt := &testerT{buf: bytes.Buffer{}}
+func TestOption(t *testing.T) {
+	tt := &testerT{buf: bytes.Buffer{}}
 
-		c := gotwant.Case("got", "want")
-		c.Test(tt)
-		r := tt.buf.String()
-		if !regexp.MustCompile(`\s*got:  got\s*want: want`).MatchString(r) {
-			t.Error(r)
-		}
+	c := gotwant.Case("got", "want")
+	c.Test(tt)
+	r := tt.buf.String()
+	if !regexp.MustCompile(`\s*got:  got\s*want: want`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Case("got", "want", gotwant.Format("%q"))
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`\s*got:  "got"\s*want: "want"`).MatchString(r) {
-			t.Error(r)
-		}
+	tt.Reset()
+	c = gotwant.Case("got", "want", gotwant.Format("%q"))
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`\s*got:  "got"\s*want: "want"`).MatchString(r) {
+		t.Error(r)
+	}
 
-		tt.Reset()
-		c = gotwant.Case("got", "want", gotwant.Desc("GOTWANT"))
-		c.Test(tt)
-		r = tt.buf.String()
-		if !regexp.MustCompile(`GOTWANT\s*got:  got\s*want: want`).MatchString(r) {
-			t.Error(r)
-		}
-	})
+	tt.Reset()
+	c = gotwant.Case("got", "want", gotwant.Desc("GOTWANT"))
+	c.Test(tt)
+	r = tt.buf.String()
+	if !regexp.MustCompile(`GOTWANT\s*got:  got\s*want: want`).MatchString(r) {
+		t.Error(r)
+	}
 }
 
 func TestHowToWrite(t *testing.T) {
