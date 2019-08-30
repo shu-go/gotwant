@@ -2,7 +2,6 @@ package gotwant
 
 import (
 	"fmt"
-	"testing"
 )
 
 // ExprCase constructs a test case of given expr.
@@ -31,7 +30,7 @@ func (c *exprCase) SetDesc(desc string) {
 	c.Desc = desc
 }
 
-func (c *exprCase) Test(t *testing.T) {
+func (c *exprCase) Test(t T) {
 	t.Helper()
 
 	if !c.Expr {

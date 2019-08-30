@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"testing"
 )
 
 type panicCase struct {
@@ -35,7 +34,7 @@ func (c *panicCase) SetDesc(desc string) {
 	c.Desc = desc
 }
 
-func (c *panicCase) Test(t *testing.T) {
+func (c *panicCase) Test(t T) {
 	t.Helper()
 
 	valfmt := c.Fmt
@@ -61,31 +60,15 @@ func (c *panicCase) Test(t *testing.T) {
 	if gotErr == nil {
 		errfmt := fmt.Sprintf("%s\ngot NO panic.\nwant error: %s", c.Desc, valfmt)
 		t.Errorf(errfmt, c.Want)
+		return
 	}
 
-	var wantErrMsg *string
-	if c.Want != nil {
-		if err, ok := c.Want.(error); ok {
-			str := err.Error()
-			wantErrMsg = &str
-		} else if str, ok := c.Want.(string); ok {
-			wantErrMsg = &str
-		} else if s, ok := c.Want.(fmt.Stringer); ok {
-			str := s.String()
-			wantErrMsg = &str
-		}
-	}
-
+	wantErrMsg := stringify(c.Want)
 	if wantErrMsg != nil {
 		// compare message
-		if s, ok := gotErr.(string); ok {
-			if strings.Contains(strings.ToLower(s), strings.ToLower(*wantErrMsg)) {
-				return
-			}
-		} else if s, ok := gotErr.(fmt.Stringer); ok {
-			if strings.Contains(strings.ToLower(s.String()), strings.ToLower(*wantErrMsg)) {
-				return
-			}
+		gotErrMsg := stringify(gotErr) // not nil
+		if strings.Contains(strings.ToLower(*gotErrMsg), strings.ToLower(*wantErrMsg)) {
+			return
 		}
 
 	}

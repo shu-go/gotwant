@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"testing"
 )
 
 type errCase struct {
@@ -35,7 +34,7 @@ func (c *errCase) SetDesc(desc string) {
 	c.Desc = desc
 }
 
-func (c *errCase) Test(t *testing.T) {
+func (c *errCase) Test(t T) {
 	t.Helper()
 
 	valfmt := c.Fmt
@@ -53,19 +52,7 @@ func (c *errCase) Test(t *testing.T) {
 		return
 	}
 
-	var wantErrMsg *string
-	if c.Want != nil {
-		if err, ok := c.Want.(error); ok {
-			str := err.Error()
-			wantErrMsg = &str
-		} else if str, ok := c.Want.(string); ok {
-			wantErrMsg = &str
-		} else if s, ok := c.Want.(fmt.Stringer); ok {
-			str := s.String()
-			wantErrMsg = &str
-		}
-	}
-
+	wantErrMsg := stringify(c.Want)
 	if wantErrMsg != nil {
 		// compare message
 		if strings.Contains(strings.ToLower(c.Got.Error()), strings.ToLower(*wantErrMsg)) {
