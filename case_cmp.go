@@ -3,7 +3,6 @@ package gotwant
 import (
 	"fmt"
 	"reflect"
-	"testing"
 )
 
 // Case constructs a value-comaration test case.
@@ -34,7 +33,7 @@ func (c *cmpCase) SetDesc(desc string) {
 	c.Desc = desc
 }
 
-func (c *cmpCase) Test(t *testing.T) {
+func (c *cmpCase) Test(t T) {
 	t.Helper()
 
 	if !reflect.DeepEqual(c.Got, c.Want) {
@@ -45,6 +44,7 @@ func (c *cmpCase) Test(t *testing.T) {
 				fmted1, fmted2 := fmt.Sprintf(f, c.Got), fmt.Sprintf(f, c.Want)
 				if fmted1 != fmted2 {
 					valfmt = f
+					break
 				}
 			}
 		}
