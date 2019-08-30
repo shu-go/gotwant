@@ -1,18 +1,21 @@
 // Package gotwant provides "got: , want: " style test functions.
 package gotwant
 
-import (
-	"testing"
-)
+import "fmt"
 
 var (
 	// FmtDefault is a default value of displaying contents of got/want.
 	FmtDefault = "%v"
 )
 
+type T interface {
+	Helper()
+	Errorf(format string, args ...interface{})
+}
+
 // TestCase is made by calling Case, Error, ...
 type TestCase interface {
-	Test(t *testing.T)
+	Test(t T)
 
 	SetFmt(string)
 	SetDesc(string)
@@ -36,14 +39,14 @@ func Desc(desc string) Option {
 }
 
 // Test if for a single try.
-func Test(t *testing.T, got, want interface{}, opts ...Option) {
+func Test(t T, got, want interface{}, opts ...Option) {
 	t.Helper()
 
 	Case(got, want, opts...).Test(t)
 }
 
 // TestExpr tests got == expr (boolean comparison)
-func TestExpr(t *testing.T, got interface{}, expr bool, opts ...Option) {
+func TestExpr(t T, got interface{}, expr bool, opts ...Option) {
 	t.Helper()
 
 	ExprCase(got, expr, opts...).Test(t)
@@ -52,7 +55,7 @@ func TestExpr(t *testing.T, got interface{}, expr bool, opts ...Option) {
 // TestError tests given error (got) is (1) exactly the error you wanted or (2) its message matches your pattern.
 // If want is a string, this func tests with strings.Contains(got, want)
 // else, this func tests with reflect.DeepEqual(got, want)
-func TestError(t *testing.T, got error, want interface{}, opts ...Option) {
+func TestError(t T, got error, want interface{}, opts ...Option) {
 	t.Helper()
 
 	Error(got, want, opts...).Test(t)
@@ -60,17 +63,34 @@ func TestError(t *testing.T, got error, want interface{}, opts ...Option) {
 
 // TestPanic tests function got panic(want) or not.
 // Pass nil to `want` if `got` is not expected panicked.
-func TestPanic(t *testing.T, got func(), want interface{}, opts ...Option) {
+func TestPanic(t T, got func(), want interface{}, opts ...Option) {
 	t.Helper()
 
 	Panic(got, want, opts...).Test(t)
 }
 
 // TestAll is for a series of tries(Cases).
-func TestAll(t *testing.T, cases []TestCase) {
+func TestAll(t T, cases []TestCase) {
 	t.Helper()
 
 	for _, c := range cases {
 		c.Test(t)
 	}
+}
+
+func stringify(s interface{}) *string {
+	if s == nil {
+		return nil
+	}
+
+	if err, ok := s.(error); ok {
+		ss := err.Error()
+		return &ss
+	} else if str, ok := s.(string); ok {
+		return &str
+	} else if ss, ok := s.(fmt.Stringer); ok {
+		sss := ss.String()
+		return &sss
+	}
+	return nil
 }
