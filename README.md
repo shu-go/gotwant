@@ -2,6 +2,7 @@ Package gotwant provides "got: , want: " style test functions.
 
 [![](https://godoc.org/github.com/shu-go/gotwant?status.svg)](https://godoc.org/github.com/shu-go/gotwant)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shu-go/gotwant)](https://goreportcard.com/report/github.com/shu-go/gotwant)
+![MIT License](https://img.shields.io/badge/License-MIT-blue)
 
 # Usage
 
