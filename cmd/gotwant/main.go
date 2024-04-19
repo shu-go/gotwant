@@ -102,7 +102,7 @@ var Version string
 func main() {
 	app := gli.NewWith(&globalCmd{})
 	app.Name = "gotwant"
-	app.Desc = "colorize"
+	app.Desc = "colorise"
 	app.Version = Version
 	app.Usage = ``
 	app.Copyright = "(C) 2024 Shuhei Kubota"

@@ -6,6 +6,8 @@ Package gotwant provides "got: , want: " style test functions.
 
 # Usage
 
+## Test
+
 ```go
 package hoge_test
 
@@ -32,3 +34,17 @@ func TestWithGotwant(t *testing.T) {
     //     want error: "not found"
 }
 ```
+
+## Colorise test output
+
+```
+go install github.com/shu-go/gotwant/...
+```
+
+```
+go test | gotwant
+```
+
+The **want** part is colored-diff, showing how the `got` part should be changed. (red should be deleted, green should be inserted)
+
+The got part is as-is.
