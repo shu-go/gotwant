@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -29,25 +30,34 @@ func (c globalCmd) Run() error {
 
 	var got, want string
 
+	gwRE := regexp.MustCompile(`^(\s+)(got:  |want: )`)
+
 	s := searchingGot
+	indent := "\n"
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
 			break
 		}
 
-		if strings.HasPrefix(line, "        got:  ") {
-			s = readingGot
-			got = line[14:]
-			want = ""
-			continue
+		matches := gwRE.FindStringSubmatch(line)
+		if len(matches) != 0 {
+			if strings.HasPrefix(matches[2], "got") {
+				s = readingGot
+				indent = matches[1]
+				got = line[len(matches[0]):]
+				want = ""
+				continue
+			}
+			if strings.HasPrefix(matches[2], "want") {
+				s = readingWant
+				indent = matches[1]
+				want = line[len(matches[0]):]
+				continue
+			}
 		}
-		if strings.HasPrefix(line, "        want: ") {
-			s = readingWant
-			want = line[14:]
-			continue
-		}
-		if strings.HasPrefix(line, "        ") {
+
+		if strings.HasPrefix(line, indent) {
 			if s == readingGot {
 				got += line
 				continue
