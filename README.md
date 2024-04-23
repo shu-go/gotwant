@@ -38,7 +38,7 @@ func TestWithGotwant(t *testing.T) {
 ## Colorise test output
 
 ```
-go install github.com/shu-go/gotwant/...
+go install github.com/shu-go/gotwant/cmd/gotwant@latest
 ```
 
 ```
