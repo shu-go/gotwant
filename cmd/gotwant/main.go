@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -13,6 +14,16 @@ import (
 )
 
 type globalCmd struct {
+	Debug bool
+
+	debug func(string, ...interface{})
+}
+
+func Output(format string, a ...interface{}) {
+	if !strings.HasSuffix(format, "\n") {
+		format += "\n"
+	}
+	fmt.Fprintf(os.Stderr, format, a...)
 }
 
 type state uint8
@@ -22,6 +33,14 @@ const (
 	readingGot
 	readingWant
 )
+
+func (c *globalCmd) Before() {
+	if c.Debug {
+		c.debug = Output
+	} else {
+		c.debug = func(string, ...interface{}) {}
+	}
+}
 
 func (c globalCmd) Run() error {
 	buf := &bytes.Buffer{}
@@ -39,20 +58,28 @@ func (c globalCmd) Run() error {
 			break
 		}
 
+		c.debug("*****")
+		c.debug("line=%q", line)
+
 		matches := gwRE.FindStringSubmatch(line)
+		c.debug("matches=%#v", matches)
 		if len(matches) != 0 {
 			if strings.HasPrefix(matches[2], "got") {
+				c.debug("GOT")
 				s = readingGot
 				got = line[len(matches[0]):]
 				want = ""
 				continue
 			}
 			if strings.HasPrefix(matches[2], "want") {
+				c.debug("WANT")
 				s = readingWant
 				want = line[len(matches[0]):]
 				continue
 			}
 		}
+
+		c.debug("mode=%d", s)
 
 		if !strings.HasPrefix(line, "FAIL") && !strings.HasPrefix(line, "---") {
 			if s == readingGot {
@@ -69,6 +96,9 @@ func (c globalCmd) Run() error {
 				continue
 			}
 		}
+
+		c.debug("got=%q", got)
+		c.debug("want=%q", want)
 
 		// colorize
 		if s == readingWant {
