@@ -14,6 +14,8 @@ import (
 )
 
 type globalCmd struct {
+	Monochrome bool `cli:"m,mono,monochrome" default:"false"`
+
 	Debug bool
 
 	debug func(string, ...interface{})
@@ -125,8 +127,11 @@ func (c globalCmd) Run() error {
 			*/
 
 			buf.WriteString("        want: ")
-			//buf.WriteString(want)
-			buf.WriteString(dmp.DiffPrettyText(diffs))
+			if c.Monochrome {
+				buf.WriteString(want)
+			} else {
+				buf.WriteString(dmp.DiffPrettyText(diffs))
+			}
 
 			// output
 		}
@@ -145,8 +150,9 @@ var Version string
 
 func main() {
 	app := gli.NewWith(&globalCmd{})
+	app.AutoNoBoolOptions = false
 	app.Name = "gotwant"
-	app.Desc = "colorise"
+	app.Desc = "colorise and align got-want style test results"
 	app.Version = Version
 	app.Usage = ``
 	app.Copyright = "(C) 2024 Shuhei Kubota"
