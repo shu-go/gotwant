@@ -81,7 +81,8 @@ func (c globalCmd) Run() error {
 
 		c.debug("mode=%d", s)
 
-		if !strings.HasPrefix(line, "FAIL") && !strings.HasPrefix(line, "---") {
+		trimline := strings.TrimPrefix(line, " ")
+		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") {
 			if s == readingGot {
 				if got != "" {
 					got += strings.Repeat(" ", 8+len("got:  "))
