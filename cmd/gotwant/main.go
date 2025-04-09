@@ -30,10 +30,9 @@ func (c globalCmd) Run() error {
 
 	var got, want string
 
-	gwRE := regexp.MustCompile(`^(\s+)(got:  |want: )`)
+	gwRE := regexp.MustCompile(`^(\s*)(got:|want:)(\s*)`)
 
 	s := searchingGot
-	indent := "\n"
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
@@ -44,24 +43,28 @@ func (c globalCmd) Run() error {
 		if len(matches) != 0 {
 			if strings.HasPrefix(matches[2], "got") {
 				s = readingGot
-				indent = matches[1]
 				got = line[len(matches[0]):]
 				want = ""
 				continue
 			}
 			if strings.HasPrefix(matches[2], "want") {
 				s = readingWant
-				indent = matches[1]
 				want = line[len(matches[0]):]
 				continue
 			}
 		}
 
-		if strings.HasPrefix(line, indent) {
+		if !strings.HasPrefix(line, "FAIL") && !strings.HasPrefix(line, "---") {
 			if s == readingGot {
+				if got != "" {
+					got += strings.Repeat(" ", 8+len("got:  "))
+				}
 				got += line
 				continue
 			} else if s == readingWant {
+				if want != "" {
+					want += strings.Repeat(" ", 8+len("want: "))
+				}
 				want += line
 				continue
 			}
