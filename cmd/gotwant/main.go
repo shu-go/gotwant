@@ -87,13 +87,13 @@ func (c globalCmd) Run() error {
 				if got != "" {
 					got += strings.Repeat(" ", 8+len("got:  "))
 				}
-				got += line
+				got += trimline
 				continue
 			} else if s == readingWant {
 				if want != "" {
 					want += strings.Repeat(" ", 8+len("want: "))
 				}
-				want += line
+				want += trimline
 				continue
 			}
 		}
