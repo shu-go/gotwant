@@ -8,7 +8,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"unicode"
 
+	"github.com/fatih/color"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/shu-go/gli/v2"
 )
@@ -105,35 +107,47 @@ func (c globalCmd) Run() error {
 
 		// colorize
 		if s == readingWant {
+			c.debug("OUTPUT")
 			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(got, want, false)
+			diffs := splitDiff(dmp.DiffMain(got, want, false))
+			for i, d := range diffs {
+				c.debug("%d diff=%+v", i, d)
+			}
 
 			buf.WriteString("        got:  ")
 			buf.WriteString(got)
-			//minus := color.New(color.FgGreen, color.Bold)
-			//plus := color.New(color.FgRed, color.CrossedOut, color.Bold)
-			/*
-				for _, d := range diffs {
-					switch d.Type {
-					case diffmatchpatch.DiffEqual:
-						buf.WriteString(d.Text)
-					case diffmatchpatch.DiffDelete:
-						plus.Fprint(buf, d.Text)
-					case diffmatchpatch.DiffInsert:
-						minus.Fprint(buf, d.Text)
-					default:
-					}
-				}
-			*/
 
 			buf.WriteString("        want: ")
 			if c.Monochrome {
 				buf.WriteString(want)
 			} else {
-				buf.WriteString(dmp.DiffPrettyText(diffs))
-			}
+				//buf.WriteString(dmp.DiffPrettyText(diffs))
+				minus := color.New(color.FgGreen, color.Bold)
+				minusS := color.New(color.FgGreen, color.Underline, color.Bold)
+				plus := color.New(color.FgRed, color.Bold)
+				plusS := color.New(color.FgRed, color.Underline, color.Bold)
 
-			// output
+				for _, d := range diffs {
+					switch d.Type {
+					case diffmatchpatch.DiffEqual:
+						buf.WriteString(d.Text)
+					case diffmatchpatch.DiffDelete:
+						if d.isSpace {
+							plusS.Fprint(buf, d.Text)
+						} else {
+							plus.Fprint(buf, d.Text)
+						}
+					case diffmatchpatch.DiffInsert:
+						if d.isSpace {
+							minusS.Fprint(buf, d.Text)
+						} else {
+							minus.Fprint(buf, d.Text)
+						}
+					default:
+					}
+				}
+
+			}
 		}
 		s = searchingGot
 
@@ -143,6 +157,52 @@ func (c globalCmd) Run() error {
 	io.Copy(os.Stdout, buf)
 
 	return nil
+}
+
+type diff struct {
+	diffmatchpatch.Diff
+	isSpace bool
+}
+
+func splitDiff(diffs []diffmatchpatch.Diff) []diff {
+	results := make([]diff, 0, len(diffs))
+
+	for _, d := range diffs {
+		if len(d.Text) == 0 {
+			continue
+		}
+
+		var prevSpace bool
+		var s []rune
+		for i, r := range d.Text {
+			space := !unicode.IsPrint(r) || unicode.IsSpace(r)
+			if i == 0 {
+				prevSpace = space
+			}
+
+			if space != prevSpace {
+				newD := d
+				newD.Text = string(s)
+				results = append(results, diff{
+					Diff:    newD,
+					isSpace: prevSpace,
+				})
+				s = s[:0]
+			}
+			s = append(s, r)
+			prevSpace = space
+		}
+		if len(s) > 0 {
+			newD := d
+			newD.Text = string(s)
+			results = append(results, diff{
+				Diff:    newD,
+				isSpace: prevSpace,
+			})
+		}
+	}
+
+	return results
 }
 
 // Version is app version
