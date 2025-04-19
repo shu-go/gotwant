@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -109,9 +110,10 @@ func (c globalCmd) Run() error {
 		if s == readingWant {
 			c.debug("OUTPUT")
 			dmp := diffmatchpatch.New()
-			diffs := splitDiff(dmp.DiffMain(got, want, false))
+			dmpdiffs := dmp.DiffMain(got, want, false)
+			diffs := splitDiff(suppressPrefixUnderline(dmpdiffs))
 			for i, d := range diffs {
-				c.debug("%d diff=%+v", i, d)
+				c.debug("%d diff=%v:%q (%v)", i, d.Type, d.Text, d.isSpace)
 			}
 
 			buf.WriteString("        got:  ")
@@ -162,6 +164,79 @@ func (c globalCmd) Run() error {
 type diff struct {
 	diffmatchpatch.Diff
 	isSpace bool
+}
+
+func suppressPrefixUnderline(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
+	result := make([]diffmatchpatch.Diff, 0, len(diffs)*2)
+
+	result = slices.Insert(result, 0, diffs...)
+
+	suppressLen := 14
+	linePrefix := strings.Repeat(" ", suppressLen)
+
+	index := len(result) - 1
+	for index >= 0 {
+		if result[index].Type == diffmatchpatch.DiffEqual {
+			index--
+			continue
+		}
+
+		insIndex := index
+		for {
+			//fmt.Fprintf(os.Stderr, " [%d] %s %q\n", insIndex, result[insIndex].Type, result[insIndex].Text)
+			pos := strings.Index(result[insIndex].Text, linePrefix)
+			if pos == -1 || result[insIndex].Text == linePrefix {
+				break
+			}
+			//fmt.Fprintf(os.Stderr, " %d\n", pos)
+
+			d := result[insIndex]
+
+			newD := d
+			newD.Type = diffmatchpatch.DiffEqual
+			newD.Text = linePrefix
+			//fmt.Fprintf(os.Stderr, "  [%d(%d)] %s %q\n", insIndex, 0, newD.Type, newD.Text)
+			result[insIndex] = newD
+
+			back := 0
+
+			if pos+suppressLen < len(d.Text) {
+				newD.Type = d.Type
+				newD.Text = d.Text[pos+suppressLen:]
+				//fmt.Fprintf(os.Stderr, "  [%d(%d)] %s %q\n", insIndex+1, +1, newD.Type, newD.Text)
+				result = slices.Insert(result, insIndex+1, newD)
+
+				back++
+			}
+			//debug
+			//for i, d := range result {
+			//	fmt.Fprintf(os.Stderr, "  %d: %v:%q\n", i, d.Type, d.Text)
+			//}
+			//println("---")
+
+			if pos > 0 {
+				newD := d
+				newD.Text = d.Text[:pos]
+				//fmt.Fprintf(os.Stderr, "  [%d(%d)] %s %q\n", insIndex, -1, newD.Type, newD.Text)
+				result = slices.Insert(result, insIndex, newD)
+
+				back++
+			}
+			//debug
+			//for i, d := range result {
+			//	fmt.Fprintf(os.Stderr, "  %d: %v:%q\n", i, d.Type, d.Text)
+			//}
+			//println("---")
+
+			//println("  back", back, insIndex)
+			insIndex += back
+			//println(" >back", back, insIndex)
+		}
+
+		index--
+	}
+
+	return result
 }
 
 func splitDiff(diffs []diffmatchpatch.Diff) []diff {
