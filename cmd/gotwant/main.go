@@ -83,7 +83,7 @@ func (c globalCmd) Run() error {
 
 		c.debug("mode=%d", s)
 
-		trimline := strings.TrimPrefix(line, " ")
+		trimline := strings.TrimLeft(line, " \t")
 		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") {
 			if s == readingGot {
 				if got != "" {
