@@ -53,8 +53,9 @@ func (c globalCmd) Run() error {
 	r := bufio.NewReader(os.Stdin)
 
 	var got, want string
+	gwIndent := 0
 
-	gwRE := regexp.MustCompile(`^(\s*)(got:|want:)(\s*)`)
+	gwRE := regexp.MustCompile(`^(\s*)(got:|want:)\s( *)`)
 
 	s := searchingGot
 	for {
@@ -62,6 +63,7 @@ func (c globalCmd) Run() error {
 		if err != nil {
 			break
 		}
+		indent := countIndent(line)
 
 		c.debug("*****")
 		c.debug("line=%q", line)
@@ -74,12 +76,14 @@ func (c globalCmd) Run() error {
 				s = readingGot
 				got = line[len(matches[0]):]
 				want = ""
+				gwIndent = len(matches[1])
 				continue
 			}
 			if strings.HasPrefix(matches[2], "want") {
 				c.debug("WANT")
 				s = readingWant
 				want = line[len(matches[0]):]
+				gwIndent = len(matches[1])
 				continue
 			}
 		}
@@ -87,7 +91,7 @@ func (c globalCmd) Run() error {
 		c.debug("mode=%d", s)
 
 		trimline := strings.TrimLeft(line, " \t")
-		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") {
+		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") && gwIndent <= indent {
 			if s == readingGot {
 				if got != "" {
 					got += strings.Repeat(" ", 8+len("got:  "))
@@ -278,6 +282,15 @@ func splitDiff(diffs []diffmatchpatch.Diff) []diff {
 	}
 
 	return results
+}
+
+func countIndent(line string) int {
+	for i := range len(line) {
+		if line[i] != ' ' {
+			return i
+		}
+	}
+	return 0
 }
 
 // Version is app version
