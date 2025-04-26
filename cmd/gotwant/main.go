@@ -60,8 +60,6 @@ func (c globalCmd) Run() error {
 	var got, want string
 	gwIndent := 0
 
-	outputIndentStr := strings.Repeat(" ", 8+len("got:  "))
-
 	gwRE := regexp.MustCompile(`^(\s*)(got:|want:)\s( *)`)
 
 	s := searchingGot
@@ -84,6 +82,7 @@ func (c globalCmd) Run() error {
 				got = strings.TrimRight(line[len(matches[0]):], "\n")
 				want = ""
 				gwIndent = len(matches[1])
+				c.debug("gwIndent=%d", gwIndent)
 				continue
 			}
 			if strings.HasPrefix(matches[2], "want") {
@@ -102,6 +101,7 @@ func (c globalCmd) Run() error {
 			// output from Example
 			// nop
 		}
+		outputIndentStr := strings.Repeat(" ", gwIndent+6)
 		if strings.HasPrefix(trimline, outputIndentStr) {
 			trimline = trimline[len(outputIndentStr):]
 		}
@@ -151,7 +151,7 @@ func (c globalCmd) Run() error {
 				}
 			}
 			dmpdiffs = splitByNewline(dmpdiffs)
-			dmpdiffs = addIndents(dmpdiffs)
+			dmpdiffs = addIndents(dmpdiffs, outputIndentStr)
 			c.debug("AFTER INDENTATION")
 			for i, d := range dmpdiffs {
 				c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
@@ -162,15 +162,17 @@ func (c globalCmd) Run() error {
 				c.debug("%d diff=%v:%q (%v)", i, d.Type, d.Text, d.isSpace)
 			}
 
-			buf.WriteString("        got:  ")
-			buf.WriteString(strings.ReplaceAll(got, "\n", "\n"+strings.Repeat(" ", 14)))
+			buf.WriteString(strings.Repeat(" ", gwIndent))
+			buf.WriteString("got:  ")
+			buf.WriteString(strings.ReplaceAll(got, "\n", "\n"+outputIndentStr))
 			if !strings.HasSuffix(got, "\n") {
 				buf.WriteByte('\n')
 			}
 
-			buf.WriteString("        want: ")
+			buf.WriteString(strings.Repeat(" ", gwIndent))
+			buf.WriteString("want: ")
 			if c.Monochrome {
-				buf.WriteString(strings.ReplaceAll(want, "\n", "\n"+strings.Repeat(" ", 14)))
+				buf.WriteString(strings.ReplaceAll(want, "\n", "\n"+outputIndentStr))
 				buf.WriteByte('\n')
 			} else {
 				//buf.WriteString(dmp.DiffPrettyText(diffs))
@@ -318,7 +320,7 @@ func splitByNewline(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
 	return results
 }
 
-func addIndents(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
+func addIndents(diffs []diffmatchpatch.Diff, indent string) []diffmatchpatch.Diff {
 	newlined := false
 
 	results := make([]diffmatchpatch.Diff, 0, len(diffs))
@@ -328,7 +330,7 @@ func addIndents(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
 		if newlined {
 			newD := diffmatchpatch.Diff{
 				Type: diffmatchpatch.DiffEqual,
-				Text: strings.Repeat(" ", 14),
+				Text: indent,
 			}
 			results = append(results, newD)
 		}
