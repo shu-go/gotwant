@@ -108,13 +108,13 @@ func (c globalCmd) Run() error {
 		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") && gwIndent <= indent {
 			if s == readingGot {
 				if got != "" {
-					got += "\n" + outputIndentStr
+					got += "\n"
 				}
 				got += trimline
 				continue
 			} else if s == readingWant {
 				if want != "" {
-					want += "\n" + outputIndentStr
+					want += "\n"
 				}
 				want += trimline
 				continue
@@ -128,12 +128,10 @@ func (c globalCmd) Run() error {
 		if s == readingWant {
 			c.debug("OUTPUT")
 			dmp := diffmatchpatch.New()
-			dmpdiffs := dmp.DiffMain(got, want, false)
-			if c.Efficiency || c.Merge || c.Semantic || c.SemanticLossless {
-				c.debug("BEFORE")
-				for i, d := range dmpdiffs {
-					c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
-				}
+			dmpdiffs := dmp.DiffMain(got, want, true)
+			c.debug("BEFORE")
+			for i, d := range dmpdiffs {
+				c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
 			}
 			switch true {
 			case c.Efficiency:
@@ -147,10 +145,16 @@ func (c globalCmd) Run() error {
 			default:
 			}
 			if c.Efficiency || c.Merge || c.Semantic || c.SemanticLossless {
-				c.debug("AFTER")
+				c.debug("AFTER CLEANUP")
 				for i, d := range dmpdiffs {
 					c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
 				}
+			}
+			dmpdiffs = splitByNewline(dmpdiffs)
+			dmpdiffs = addIndents(dmpdiffs)
+			c.debug("AFTER INDENTATION")
+			for i, d := range dmpdiffs {
+				c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
 			}
 			diffs := splitDiff(suppressPrefixUnderline(dmpdiffs))
 			c.debug("AFTER SUPPRESSION")
@@ -159,14 +163,14 @@ func (c globalCmd) Run() error {
 			}
 
 			buf.WriteString("        got:  ")
-			buf.WriteString(got)
+			buf.WriteString(strings.ReplaceAll(got, "\n", "\n"+strings.Repeat(" ", 14)))
 			if !strings.HasSuffix(got, "\n") {
 				buf.WriteByte('\n')
 			}
 
 			buf.WriteString("        want: ")
 			if c.Monochrome {
-				buf.WriteString(want)
+				buf.WriteString(strings.ReplaceAll(want, "\n", "\n"+strings.Repeat(" ", 14)))
 				buf.WriteByte('\n')
 			} else {
 				//buf.WriteString(dmp.DiffPrettyText(diffs))
@@ -284,6 +288,57 @@ func suppressPrefixUnderline(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff 
 	}
 
 	return result
+}
+
+func splitByNewline(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
+	results := make([]diffmatchpatch.Diff, 0, len(diffs))
+
+	for _, d := range diffs {
+		dText := d.Text
+		for {
+			pos := strings.Index(dText, "\n")
+			if pos == -1 {
+				break
+			}
+
+			newD := d
+			newD.Text = dText[:pos+1]
+			results = append(results, newD)
+
+			dText = dText[pos+1:]
+		}
+
+		if dText != "" {
+			newD := d
+			newD.Text = dText
+			results = append(results, newD)
+		}
+	}
+
+	return results
+}
+
+func addIndents(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
+	newlined := false
+
+	results := make([]diffmatchpatch.Diff, 0, len(diffs))
+
+	for _, d := range diffs {
+		dText := d.Text
+		if newlined {
+			newD := diffmatchpatch.Diff{
+				Type: diffmatchpatch.DiffEqual,
+				Text: strings.Repeat(" ", 14),
+			}
+			results = append(results, newD)
+		}
+
+		results = append(results, d)
+
+		newlined = strings.Contains(dText, "\n")
+	}
+
+	return results
 }
 
 func splitDiff(diffs []diffmatchpatch.Diff) []diff {
