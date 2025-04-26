@@ -55,12 +55,14 @@ func (c globalCmd) Run() error {
 	var got, want string
 	gwIndent := 0
 
+	outputIndentStr := strings.Repeat(" ", 8+len("got:  "))
+
 	gwRE := regexp.MustCompile(`^(\s*)(got:|want:)\s( *)`)
 
 	s := searchingGot
 	for {
 		line, err := r.ReadString('\n')
-		if err != nil {
+		if err != nil && line == "" {
 			break
 		}
 		indent := countIndent(line)
@@ -74,7 +76,7 @@ func (c globalCmd) Run() error {
 			if strings.HasPrefix(matches[2], "got") {
 				c.debug("GOT")
 				s = readingGot
-				got = line[len(matches[0]):]
+				got = strings.TrimRight(line[len(matches[0]):], "\n")
 				want = ""
 				gwIndent = len(matches[1])
 				continue
@@ -82,7 +84,7 @@ func (c globalCmd) Run() error {
 			if strings.HasPrefix(matches[2], "want") {
 				c.debug("WANT")
 				s = readingWant
-				want = line[len(matches[0]):]
+				want = strings.TrimRight(line[len(matches[0]):], "\n")
 				gwIndent = len(matches[1])
 				continue
 			}
@@ -90,17 +92,24 @@ func (c globalCmd) Run() error {
 
 		c.debug("mode=%d", s)
 
-		trimline := strings.TrimLeft(line, " \t")
+		trimline := strings.TrimRight(line, "\n")
+		if gwIndent == 0 {
+			// output from Example
+			// nop
+		}
+		if strings.HasPrefix(trimline, outputIndentStr) {
+			trimline = trimline[len(outputIndentStr):]
+		}
 		if !strings.HasPrefix(trimline, "FAIL") && !strings.HasPrefix(trimline, "---") && gwIndent <= indent {
 			if s == readingGot {
 				if got != "" {
-					got += strings.Repeat(" ", 8+len("got:  "))
+					got += "\n" + outputIndentStr
 				}
 				got += trimline
 				continue
 			} else if s == readingWant {
 				if want != "" {
-					want += strings.Repeat(" ", 8+len("want: "))
+					want += "\n" + outputIndentStr
 				}
 				want += trimline
 				continue
@@ -116,16 +125,23 @@ func (c globalCmd) Run() error {
 			dmp := diffmatchpatch.New()
 			dmpdiffs := dmp.DiffMain(got, want, false)
 			diffs := splitDiff(suppressPrefixUnderline(dmpdiffs))
+			for i, d := range dmpdiffs {
+				c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
+			}
 			for i, d := range diffs {
 				c.debug("%d diff=%v:%q (%v)", i, d.Type, d.Text, d.isSpace)
 			}
 
 			buf.WriteString("        got:  ")
 			buf.WriteString(got)
+			if !strings.HasSuffix(got, "\n") {
+				buf.WriteByte('\n')
+			}
 
 			buf.WriteString("        want: ")
 			if c.Monochrome {
 				buf.WriteString(want)
+				buf.WriteByte('\n')
 			} else {
 				//buf.WriteString(dmp.DiffPrettyText(diffs))
 				minus := color.New(color.FgGreen, color.Bold)
@@ -152,6 +168,7 @@ func (c globalCmd) Run() error {
 					default:
 					}
 				}
+				buf.WriteByte('\n')
 
 			}
 		}
