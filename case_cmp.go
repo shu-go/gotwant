@@ -48,7 +48,9 @@ func (c *cmpCase) Test(t T) {
 				}
 			}
 		}
-		errfmt := fmt.Sprintf("%s\ngot:  %s\nwant: %s", c.Desc, valfmt, valfmt)
-		t.Errorf(errfmt, c.Got, c.Want)
+
+		got := indent(fmt.Sprintf(fmt.Sprintf("got:  %s", valfmt), c.Got))
+		want := indent(fmt.Sprintf(fmt.Sprintf("want: %s", valfmt), c.Want))
+		t.Errorf("%s\n%s\n%s", c.Desc, got, want)
 	}
 }

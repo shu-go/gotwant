@@ -1,7 +1,10 @@
 // Package gotwant provides "got: , want: " style test functions.
 package gotwant
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 var (
 	// FmtDefault is a default value of displaying contents of got/want.
@@ -94,4 +97,8 @@ func stringify(s interface{}) *string {
 		return &sss
 	}
 	return nil
+}
+
+func indent(s string) string {
+	return strings.ReplaceAll(s, "\n", "\n      ")
 }
