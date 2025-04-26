@@ -19,6 +19,11 @@ import (
 type globalCmd struct {
 	Monochrome bool `cli:"m,mono,monochrome" default:"false"`
 
+	Efficiency       bool `cli:"e,efficiency" help:"reduces the number of edits by eliminating operationally trivial equalities"`
+	Merge            bool `cli:"merge" help:"Any edit section can move as long as it doesn't cross an equality"`
+	Semantic         bool `cli:"s,semantic" help:"reduces the number of edits by eliminating semantically trivial equalities"`
+	SemanticLossless bool `cli:"sl,semantic-lossless" help:"looks for single edits surrounded on both sides by equalities which can be shifted sideways to align the edit to a word boundary"`
+
 	Debug bool
 
 	debug func(string, ...interface{})
@@ -124,10 +129,31 @@ func (c globalCmd) Run() error {
 			c.debug("OUTPUT")
 			dmp := diffmatchpatch.New()
 			dmpdiffs := dmp.DiffMain(got, want, false)
-			diffs := splitDiff(suppressPrefixUnderline(dmpdiffs))
-			for i, d := range dmpdiffs {
-				c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
+			if c.Efficiency || c.Merge || c.Semantic || c.SemanticLossless {
+				c.debug("BEFORE")
+				for i, d := range dmpdiffs {
+					c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
+				}
 			}
+			switch true {
+			case c.Efficiency:
+				dmpdiffs = dmp.DiffCleanupEfficiency(dmpdiffs)
+			case c.Merge:
+				dmpdiffs = dmp.DiffCleanupMerge(dmpdiffs)
+			case c.Semantic:
+				dmpdiffs = dmp.DiffCleanupSemantic(dmpdiffs)
+			case c.SemanticLossless:
+				dmpdiffs = dmp.DiffCleanupSemanticLossless(dmpdiffs)
+			default:
+			}
+			if c.Efficiency || c.Merge || c.Semantic || c.SemanticLossless {
+				c.debug("AFTER")
+				for i, d := range dmpdiffs {
+					c.debug("%d dmpdiff=%v:%q", i, d.Type, d.Text)
+				}
+			}
+			diffs := splitDiff(suppressPrefixUnderline(dmpdiffs))
+			c.debug("AFTER SUPPRESSION")
 			for i, d := range diffs {
 				c.debug("%d diff=%v:%q (%v)", i, d.Type, d.Text, d.isSpace)
 			}
